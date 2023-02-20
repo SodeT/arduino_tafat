@@ -1,6 +1,3 @@
-#include "../include/Block.hpp"
-
-#include "../include/Utils.hpp"
 
 Block::Block(float x, float z) 
 {
@@ -27,8 +24,10 @@ Block::Block(float x, float z)
 
 Block::~Block()
 {
+	Serial.println("Destruct");
 	free(Corners);
 	free(MappedCorners);
+	Serial.println("Done");
 	return;
 }
 

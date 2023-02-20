@@ -3,12 +3,20 @@
 
 #include "Block.hpp"
 
+#include <U8glib.h>
+
 #define pi 3.14159
 
 class Block;
 
 
 U8GLIB_SSD1306_128X64 oled(U8G_I2C_OPT_NONE);
+
+struct Vector
+{
+    float x;
+    float y;
+};
 
 const int Width = 128;
 const int Height = 64;
@@ -35,6 +43,7 @@ float GetDistance(Vector from, Vector to);
 void SelectionSort(Block* blocks);
 //bool InsideSpan(ViewportSpan span, float x);
 
+
 struct Line
 {
     Vector From;
@@ -54,11 +63,6 @@ struct Corner
     float Distance;
 };
 
-struct Vector
-{
-    float x;
-    float y;
-};
 
 /*
 struct ViewportSpan

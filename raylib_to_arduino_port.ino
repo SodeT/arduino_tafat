@@ -6,15 +6,20 @@
 
 #include <unistd.h>
 
+Block* blocks;
+BasicCam cam(3, 3, 90);
+
 void setup()
 {
-}
+    Serial.begin(9600);
+    Serial.println(sizeof(int));
+    Serial.println(sizeof(float));
+    Serial.println(sizeof(Vector));
+    Serial.println(sizeof(Line));
+    Serial.println(sizeof(Block));
+    Serial.println(sizeof(BasicCam));
 
-void loop()
-{
-
-    Block* blocks = (Block*)malloc(BLOCK_COUNT * sizeof(Block));
-
+    blocks = (Block*)malloc(BLOCK_COUNT * sizeof(Block));
     int i = 0;
     for (int y = 0; y < 8; y++) 
     {
@@ -22,14 +27,17 @@ void loop()
         {
             if (World[y][x] == 1)
             {
-                blocks.[i] = new Block(x, y);
+                blocks[i] = Block(x, y);
                 i++;
+                Serial.println("block const");
             }
         }
     }
+}
 
-    BasicCam cam(3, 3, 90);
-
+void loop()
+{
+    Serial.println("loop");
     oled.firstPage();  
     do {
         cam.GetCorners(blocks);
@@ -38,8 +46,23 @@ void loop()
         cam.GenerateLineBuffer(blocks);
         cam.DrawCall();
         cam.HandleInput();
+        Serial.println("loop - loop");
     } while(oled.nextPage());
 
-    return 0;
+    //free(blocks);
+
 }
 
+
+// this is not my code
+void display_freeram() {
+  Serial.print(F("- SRAM left: "));
+  Serial.println(freeRam());
+}
+
+int freeRam() {
+  extern int __heap_start,*__brkval;
+  int v;
+  return (int)&v - (__brkval == 0  
+    ? (int)&__heap_start : (int) __brkval);  
+}

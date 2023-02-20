@@ -1,9 +1,3 @@
-#include "../include/Utils.hpp"
-
-#include "../include/Block.hpp"
-
-#include <math.h>
-
 
 float RadToDeg(float rad)
 {
@@ -38,26 +32,37 @@ float GetDistance(Vector from, Vector to)
 
 void SelectionSort(Block* blocks) 
 { 
+    Serial.println("Debug 1");
     size_t index; 
     for (size_t i = 0; i < BLOCK_COUNT -1; i++)
     {
-
+        Serial.println("Debug 2");
         index = i; 
         for (size_t j = i+1; j < BLOCK_COUNT; j++)
         {
+            Serial.println("Debug 3");
             if (blocks[j].Distance < blocks[index].Distance)
             {
+                Serial.println("debug 4");
                 index = j;
             }
         }
 
+        Serial.println("Debug 5");
         if (index != i)
         {
+            Serial.println("debug 6");
             Block b = blocks[i];
+            Serial.println("loosefp");
             blocks[i] = blocks[index];
+            Serial.println("kdjg");
+            Serial.println(index);
             blocks[index] = b;
+            Serial.println("loop");
         }
+        Serial.println("loopedy");
     }
+    Serial.println("lokdrtugöoadrihop");
     return;
 } 
 

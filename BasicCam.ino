@@ -1,11 +1,4 @@
 
-#include "../include/BasicCam.hpp"
-
-#include "../include/Block.hpp"
-#include "../include/Utils.hpp"
-
-#include <math.h>
-
 BasicCam::BasicCam(float x, float z, float Fov) 
     : Position({x * Scale, z * Scale}), Fov(Fov) 
 {
@@ -27,7 +20,7 @@ void BasicCam::GetCorners(Block* blocks)
         blocks[i].Distance = GetDistance(blocks[i].Middle, Position);
         for (size_t j = 0; j < 4; j++)
         {
-            Vector2 cornerPos = blocks[i].Corners[j].Position;
+            Vector cornerPos = blocks[i].Corners[j].Position;
             float cornerAngle = GetAngle(cornerPos, Position);
             float relativeAngle = cornerAngle + Direction;
 
@@ -64,7 +57,6 @@ void BasicCam::MapToScreen(Block* blocks)
 void BasicCam::OccludeCorners(Block* blocks)
 {
     SelectionSort(blocks);
-
     for (size_t i = 0; i < BLOCK_COUNT; i++)
     {
         blocks[i].GetVisible();
@@ -207,7 +199,7 @@ void BasicCam::HandleInput()
         Direction += 360;
     }
 
-    return;
 */
+    return;
 }
 
