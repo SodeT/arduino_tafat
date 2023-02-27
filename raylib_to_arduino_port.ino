@@ -1,23 +1,15 @@
 #include "include/Block.hpp"
 #include "include/BasicCam.hpp"
 #include "include/Utils.hpp"
-
 #include <U8glib.h>
-
 #include <unistd.h>
 
 Block* blocks;
-BasicCam cam(3, 3, 90);
+BasicCam cam(3, 2, 90);
 
 void setup()
 {
     Serial.begin(9600);
-    Serial.println(sizeof(int));
-    Serial.println(sizeof(float));
-    Serial.println(sizeof(Vector));
-    Serial.println(sizeof(Line));
-    Serial.println(sizeof(Block));
-    Serial.println(sizeof(BasicCam));
 
     blocks = (Block*)malloc(BLOCK_COUNT * sizeof(Block));
     int i = 0;
@@ -29,7 +21,6 @@ void setup()
             {
                 blocks[i] = Block(x, y);
                 i++;
-                Serial.println("block const");
             }
         }
     }
@@ -37,20 +28,34 @@ void setup()
 
 void loop()
 {
-    Serial.println("loop");
-    oled.firstPage();  
+    oled.firstPage();
+
+    cam.GetCorners(blocks);
+    cam.MapToScreen(blocks);
+    cam.OccludeCorners(blocks);
+    cam.GenerateLineBuffer(blocks);
+    cam.ClampLines();
+
+    cam.HandleInput();
     do {
-        cam.GetCorners(blocks);
-        cam.MapToScreen(blocks);
-        cam.OccludeCorners(blocks);
-        cam.GenerateLineBuffer(blocks);
         cam.DrawCall();
-        cam.HandleInput();
-        Serial.println("loop - loop");
+
+        oled.drawLine(HMid -3, 
+                VMid, 
+                HMid +3, 
+                VMid);
+
+        oled.drawLine(HMid, 
+                VMid +3, 
+                HMid, 
+                VMid -3);
+
+
     } while(oled.nextPage());
-
-    //free(blocks);
-
+    display_freeram();
+    //Serial.print(cam.Position.x);
+    //Serial.print(", ");
+    //Serial.println(cam.Position.y);
 }
 
 

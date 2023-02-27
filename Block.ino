@@ -22,15 +22,6 @@ Block::Block(float x, float z)
 	return;
 }
 
-Block::~Block()
-{
-	Serial.println("Destruct");
-	free(Corners);
-	free(MappedCorners);
-	Serial.println("Done");
-	return;
-}
-
 // algorithm from https://en.wikipedia.org/wiki/Sorting_network
 void Block::SortCorners()
 {

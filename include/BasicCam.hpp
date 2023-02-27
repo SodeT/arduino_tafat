@@ -11,23 +11,22 @@ class BasicCam
     float _fovPixels;
     int _depthEffect = 700; // lower value => increase shrinking at distance
 
-    float _speed = 0.3;
-    float _rotationSpeed = 2;
+    char _speed = 1;
+    char _rotationSpeed = 2;
 
     Vector _velocity = {0, 0};
-    float _friction = 0.9;
 
 public:
     Vector Position;
     float Fov;
-    float Direction = 180;
+    int Direction = 180;
 
-    BasicCam(float x, float z, float Fov);
-    ~BasicCam();
+    BasicCam(int x, int z, float Fov);
     void GetCorners(Block* blocks);
     void MapToScreen(Block* blocks);
-    void GenerateLineBuffer(Block* blocks);
     void OccludeCorners(Block* blocks);
+    void GenerateLineBuffer(Block* blocks);
+    void ClampLines();
     void DrawCall();
     void HandleInput();
 

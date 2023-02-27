@@ -1,15 +1,9 @@
 
-BasicCam::BasicCam(float x, float z, float Fov) 
+BasicCam::BasicCam(int x, int z, float Fov) 
     : Position({x * Scale, z * Scale}), Fov(Fov) 
 {
     _fovPixels = Width / Fov;
     _lineBuffer = (Line*)malloc(sizeof(Line) * BLOCK_COUNT * 7);
-    return;
-}
-
-BasicCam::~BasicCam()
-{
-    free(_lineBuffer);
     return;
 }
 
@@ -112,12 +106,55 @@ void BasicCam::GenerateLineBuffer(Block* blocks)
     return;
 }
 
+void BasicCam::ClampLines()
+{
+    for (size_t i = 0; i < _bufferSize; i++)
+    {
+        if((_lineBuffer[i].From.x < 0 && _lineBuffer[i].To.x < 0) ||
+            (_lineBuffer[i].From.x > Width && _lineBuffer[i].To.x > Width))
+        {
+            continue;
+        }
+
+        
+        if (_lineBuffer[i].From.x < 0)
+        {
+            int k = (_lineBuffer[i].To.y - _lineBuffer[i].From.y) / (_lineBuffer[i].To.x - _lineBuffer[i].From.x);
+            int dX = _lineBuffer[i].From.x;
+            int dY = dX * k + _lineBuffer[i].From.y;
+            _lineBuffer[i].From.x = 0;
+            _lineBuffer[i].From.y = dY;
+        }
+        else if (_lineBuffer[i].To.x > Width)
+        {
+            int k = (_lineBuffer[i].To.y - _lineBuffer[i].From.y) / (_lineBuffer[i].From.x - _lineBuffer[i].To.x);
+            int dX = _lineBuffer[i].To.x;
+            int dY = dX * k + _lineBuffer[i].To.y;
+            _lineBuffer[i].To.x = Width;
+            _lineBuffer[i].To.y = dY;
+        }
+
+        _lineBuffer[i].From.y = max(_lineBuffer[i].From.y, 0);
+        _lineBuffer[i].From.y = min(_lineBuffer[i].From.y, Height -1);
+
+        _lineBuffer[i].To.y = max(_lineBuffer[i].To.y, 0);
+        _lineBuffer[i].To.y = min(_lineBuffer[i].To.y, Height -1);
+        
+
+    }
+    return;
+}
+
 void BasicCam::DrawCall()
 {
     for (size_t i = 0; i < _bufferSize; i++)
     {
         Line line = _lineBuffer[i];
-        if ((line.From.x > Width && line.To.x < 0) || (line.From.x < 0 && line.To.x > Width))
+        if (line.From.x < 0 || line.To.x >= Width)
+        {
+            continue;
+        }
+        if (line.From.y < 0 && line.To.y >= height)
         {
             continue;
         }
@@ -132,28 +169,23 @@ void BasicCam::DrawCall()
 
 void BasicCam::HandleInput()
 {
+    int xValue = analogRead(VRX_PIN);
+    int yValue = analogRead(VRY_PIN);
 
-
-/*
-    if (IsKeyDown(KEY_UP))
+    if (yValue <= 256)
     {
         _velocity.x = -cos(DegToRad(Direction)) * _speed;
         _velocity.y = sin(DegToRad(Direction)) * _speed;
     }
-    else if (IsKeyDown(KEY_DOWN))
+    else if (yValue >= 768)
     {
         _velocity.x = -cos(DegToRad(Direction)) * -_speed;
         _velocity.y = sin(DegToRad(Direction)) * -_speed;
     }
     else
     {
-        _velocity.x *= _friction;
-        _velocity.y *= _friction;
-
-        if (abs(_velocity.x) < 0.001)
-            _velocity.x = 0;
-        if (abs(_velocity.y) < 0.001)
-            _velocity.y = 0;
+        _velocity.x = 0;
+        _velocity.y = 0;
     }
 
     Vector tempPos = Position;
@@ -181,11 +213,11 @@ void BasicCam::HandleInput()
     }
 
     // Rotation
-    if (IsKeyDown(KEY_LEFT))
+    if (xValue <= 256)
     {
         Direction += _rotationSpeed;
     }
-    else if (IsKeyDown(KEY_RIGHT))
+    else if (xValue >= 768)
     {
         Direction -= _rotationSpeed;
     }
@@ -199,7 +231,6 @@ void BasicCam::HandleInput()
         Direction += 360;
     }
 
-*/
     return;
 }
 

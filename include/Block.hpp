@@ -10,12 +10,11 @@ class Block
 {
 public:
     Vector Middle;
-    float Distance;
+    char Distance;
     MappedCorner* VisibleCorners[3];
     Corner* Corners;
     MappedCorner* MappedCorners; 
     Block(float x, float z);
-    ~Block();
 
 
     void SortCorners();
