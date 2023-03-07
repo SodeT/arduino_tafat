@@ -30,6 +30,22 @@ float GetDistance(Vector from, Vector to)
     return sqrt(c2);
 }
 
+FVector ToFVector(Vector vec)
+{
+    FVector vec2;
+    vec2.x = vec.x;
+    vec2.y = vec.y;
+    return vec2;
+}
+
+Vector ToVector(FVector vec)
+{
+    Vector vec2;
+    vec2.x = vec.x;
+    vec2.y = vec.y;
+    return vec2;
+}
+
 void SelectionSort(Block* blocks) 
 { 
     size_t index; 
@@ -54,15 +70,15 @@ void SelectionSort(Block* blocks)
     return;
 } 
 
-/*
-bool InsideSpan(ViewportSpan span, float x)
+
+bool InsideSpan(ViewportSpan* span, int x)
 {
-    if (x > span.From && x < span.To)
+    if (span->From < x && x < span->To)
     {
         return true;
     }
     return false;
 }
-*/
+
 
 

@@ -1,5 +1,5 @@
 
-Block::Block(float x, float z) 
+Block::Block(int x, int z) 
 {
 	Corners = (Corner*)malloc(4 * sizeof(Corner));
 	MappedCorners = (MappedCorner*)malloc(4 * sizeof(MappedCorner));
@@ -27,35 +27,35 @@ void Block::SortCorners()
 {
 	MappedCorner temp;
 
-	if (MappedCorners[0].XOffset > MappedCorners[2].XOffset)
+	if (MappedCorners[0].XOffset >= MappedCorners[2].XOffset)
 	{
 		temp = MappedCorners[0];
 		MappedCorners[0] = MappedCorners[2];
 		MappedCorners[2] = temp;
 	}
 
-	if (MappedCorners[1].XOffset > MappedCorners[3].XOffset)
+	if (MappedCorners[1].XOffset >= MappedCorners[3].XOffset)
 	{
 		temp = MappedCorners[1];
 		MappedCorners[1] = MappedCorners[3];
 		MappedCorners[3] = temp;
 	}
 
-	if (MappedCorners[0].XOffset > MappedCorners[1].XOffset)
+	if (MappedCorners[0].XOffset >= MappedCorners[1].XOffset)
 	{
 		temp = MappedCorners[0];
 		MappedCorners[0] = MappedCorners[1];
 		MappedCorners[1] = temp;
 	}
 
-	if (MappedCorners[2].XOffset > MappedCorners[3].XOffset)
+	if (MappedCorners[2].XOffset >= MappedCorners[3].XOffset)
 	{
 		temp = MappedCorners[2];
 		MappedCorners[2] = MappedCorners[3];
 		MappedCorners[3] = temp;
 	}
 
-	if (MappedCorners[1].XOffset > MappedCorners[2].XOffset)
+	if (MappedCorners[1].XOffset >= MappedCorners[2].XOffset)
 	{
 		temp = MappedCorners[1];
 		MappedCorners[1] = MappedCorners[2];
@@ -78,7 +78,7 @@ void Block::GetVisible()
 	}
 	else 
 	{
-		VisibleCorners[1] = &MappedCorners[0];
+		VisibleCorners[1] = nullptr; //&MappedCorners[0];
 	}
 	
 	return;

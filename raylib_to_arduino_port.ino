@@ -10,7 +10,16 @@ BasicCam cam(3, 2, 90);
 void setup()
 {
     Serial.begin(9600);
+/*
+    Serial.print("Pre block: ");
+    display_freeram();
+    Block newblock(24, 42);
+    Serial.print("Post block: ");
+    display_freeram();
+*/
 
+
+    display_freeram();
     blocks = (Block*)malloc(BLOCK_COUNT * sizeof(Block));
     int i = 0;
     for (int y = 0; y < 8; y++) 
@@ -24,21 +33,23 @@ void setup()
             }
         }
     }
+    display_freeram();
 }
 
 void loop()
 {
     oled.firstPage();
-
-    cam.GetCorners(blocks);
-    cam.MapToScreen(blocks);
-    cam.OccludeCorners(blocks);
-    cam.GenerateLineBuffer(blocks);
-    cam.ClampLines();
-
-    cam.HandleInput();
     do {
+        cam.GetCorners(blocks);
+        cam.MapToScreen(blocks);
+        cam.OccludeCorners(blocks);
+        cam.GenerateLineBuffer(blocks);
+        cam.ClampLines();
+
+        cam.HandleInput();
         cam.DrawCall();
+
+
 
         oled.drawLine(HMid -3, 
                 VMid, 
@@ -51,8 +62,8 @@ void loop()
                 VMid -3);
 
 
+
     } while(oled.nextPage());
-    display_freeram();
     //Serial.print(cam.Position.x);
     //Serial.print(", ");
     //Serial.println(cam.Position.y);

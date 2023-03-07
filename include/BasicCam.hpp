@@ -1,3 +1,4 @@
+
 #ifndef BASICCAM_HPP
 #define BASICCAM_HPP
 
@@ -5,19 +6,23 @@
 
 class BasicCam 
 {
+private:
     Line* _lineBuffer;
     size_t _bufferSize = 0;
+
+    ViewportSpan* _occlusionMap;
+    size_t _occlusionSize = 0;
 
     float _fovPixels;
     int _depthEffect = 700; // lower value => increase shrinking at distance
 
-    char _speed = 1;
-    char _rotationSpeed = 2;
+    int _speed = 1;
+    int _rotationSpeed = 2;
 
-    Vector _velocity = {0, 0};
+    FVector _velocity = {0, 0};
 
 public:
-    Vector Position;
+    FVector Position;
     float Fov;
     int Direction = 180;
 

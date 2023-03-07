@@ -4,6 +4,7 @@ BasicCam::BasicCam(int x, int z, float Fov)
 {
     _fovPixels = Width / Fov;
     _lineBuffer = (Line*)malloc(sizeof(Line) * BLOCK_COUNT * 7);
+    _occlusionMap = (ViewportSpan*)malloc(sizeof(ViewportSpan) * BLOCK_COUNT);
     return;
 }
 
@@ -11,16 +12,16 @@ void BasicCam::GetCorners(Block* blocks)
 {
     for (size_t i = 0; i < BLOCK_COUNT; i++)
     {
-        blocks[i].Distance = GetDistance(blocks[i].Middle, Position);
+        blocks[i].Distance = GetDistance(blocks[i].Middle, ToVector(Position));
         for (size_t j = 0; j < 4; j++)
         {
             Vector cornerPos = blocks[i].Corners[j].Position;
-            float cornerAngle = GetAngle(cornerPos, Position);
+            float cornerAngle = GetAngle(cornerPos, ToVector(Position));
             float relativeAngle = cornerAngle + Direction;
 
             blocks[i].Corners[j].Direction = relativeAngle;
 
-            float distance = GetDistance(cornerPos, Position);
+            float distance = GetDistance(cornerPos, ToVector(Position));
             blocks[i].Corners[j].Distance = distance;
         }
     }
@@ -44,16 +45,35 @@ void BasicCam::MapToScreen(Block* blocks)
             blocks[i].MappedCorners[j] = mCorner;
         }
         blocks[i].SortCorners();
+        blocks[i].GetVisible();
     }
     return;
 }
 
+/*
+This is very inneficcient
+do occlusion culling based on neighboring blocks from the World[8][8] variable
+
+*/
+
 void BasicCam::OccludeCorners(Block* blocks)
 {
     SelectionSort(blocks);
-    for (size_t i = 0; i < BLOCK_COUNT; i++)
+
+    ViewportSpan viewportSpan; 
+    for (size_t i = 0; i < BLOCK_COUNT; i++) 
     {
-        blocks[i].GetVisible();
+        Block b = blocks[i];
+        int blockX = b.Corners[0].Position.x / Scale;
+        int blockY = b.Corners[0].Position.y / Scale;
+
+   
+
+        viewportSpan.From = blocks[i].VisibleCorners[0]->XOffset;
+        viewportSpan.To = blocks[i].VisibleCorners[2]->XOffset;
+        _occlusionMap[i] = viewportSpan;
+        _occlusionSize++;
+    
     }
 
     return;
@@ -68,7 +88,7 @@ void BasicCam::GenerateLineBuffer(Block* blocks)
         int visibleCornerCount = 3;
         for (int j = 0; j < 3; j++)
         {
-            if (blocks[i].VisibleCorners[j] ==  &blocks[i].MappedCorners[0] && j == 1)
+            if (blocks[i].VisibleCorners[j] ==  nullptr) //&blocks[i].MappedCorners[0] && j == 1)
             {
                 visibleCornerCount -= 1;
                 continue;
@@ -154,7 +174,7 @@ void BasicCam::DrawCall()
         {
             continue;
         }
-        if (line.From.y < 0 && line.To.y >= height)
+        if (line.From.y < 0 && line.To.y >= Height)
         {
             continue;
         }
@@ -188,7 +208,7 @@ void BasicCam::HandleInput()
         _velocity.y = 0;
     }
 
-    Vector tempPos = Position;
+    FVector tempPos = Position;
     tempPos.x += _velocity.x;
     tempPos.y += _velocity.y;
 

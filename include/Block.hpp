@@ -9,17 +9,16 @@ struct Corner;
 class Block 
 {
 public:
+    BlockCullInfo CullInfo;
     Vector Middle;
     char Distance;
     MappedCorner* VisibleCorners[3];
     Corner* Corners;
     MappedCorner* MappedCorners; 
-    Block(float x, float z);
-
+    Block(int x, int z);
 
     void SortCorners();
     void GetVisible();
-
 };
 
 #endif
