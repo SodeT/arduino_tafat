@@ -1,24 +1,10 @@
 
-Block::Block(int x, int z) 
+Block::Block(int x, int y) 
 {
-	Corners = (Corner*)malloc(4 * sizeof(Corner));
 	MappedCorners = (MappedCorner*)malloc(4 * sizeof(MappedCorner));
 
-	Middle.x = x * Scale + Scale / 2;
-	Middle.y = z * Scale + Scale / 2;
-
-	Corners[0].Position.x = x * Scale;
-	Corners[0].Position.y = z * Scale;
-
-	Corners[1].Position.x = x * Scale + Scale;
-	Corners[1].Position.y = z * Scale;
-
-	Corners[2].Position.x = x * Scale;
-	Corners[2].Position.y = z * Scale + Scale;
-
-	Corners[3].Position.x = x * Scale + Scale;
-	Corners[3].Position.y = z * Scale + Scale;
-
+	Position.x = x * Scale;
+	Position.y = y * Scale;
 	return;
 }
 
@@ -78,7 +64,7 @@ void Block::GetVisible()
 	}
 	else 
 	{
-		VisibleCorners[1] = nullptr; //&MappedCorners[0];
+		VisibleCorners[1] = nullptr;
 	}
 	
 	return;

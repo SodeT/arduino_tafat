@@ -1,10 +1,10 @@
 
-BasicCam::BasicCam(int x, int z, float Fov) 
-    : Position({x * Scale, z * Scale}), Fov(Fov) 
+BasicCam::BasicCam(int x, int y, float Fov) 
+    : Position({x * Scale, y * Scale}), Fov(Fov) 
 {
     _fovPixels = Width / Fov;
     _lineBuffer = (Line*)malloc(sizeof(Line) * BLOCK_COUNT * 7);
-    _occlusionMap = (ViewportSpan*)malloc(sizeof(ViewportSpan) * BLOCK_COUNT);
+    _occlusionMap = (bool*)malloc(sizeof(bool) * Width);
     return;
 }
 
@@ -12,35 +12,40 @@ void BasicCam::GetCorners(Block* blocks)
 {
     for (size_t i = 0; i < BLOCK_COUNT; i++)
     {
-        blocks[i].Distance = GetDistance(blocks[i].Middle, ToVector(Position));
+        blocks[i].Distance = GetDistance(blocks[i].Position, ToVector(Position));
         for (size_t j = 0; j < 4; j++)
         {
-            Vector cornerPos = blocks[i].Corners[j].Position;
+            Vector cornerPos = blocks[i].Position;
+            switch (j)
+            {
+            case 1:
+                cornerPos.x += Scale;
+                break;
+            
+            case 2:
+                cornerPos.y += Scale;
+                break;
+
+            case 3:
+                cornerPos.x += Scale;
+                cornerPos.y += Scale;
+                break;
+
+            default:
+                break;
+            }
+
             float cornerAngle = GetAngle(cornerPos, ToVector(Position));
             float relativeAngle = cornerAngle + Direction;
-
-            blocks[i].Corners[j].Direction = relativeAngle;
-
             float distance = GetDistance(cornerPos, ToVector(Position));
-            blocks[i].Corners[j].Distance = distance;
-        }
-    }
-    return;
-}
 
-void BasicCam::MapToScreen(Block* blocks)
-{
-    for (size_t i = 0; i < BLOCK_COUNT; i++)
-    {
-        for (int j = 0; j < 4; j++)
-        {
             MappedCorner mCorner;
-            mCorner.Distance = blocks[i].Corners[j].Distance;
-            float dir = blocks[i].Corners[j].Direction;
-            if (dir > 180)
-                dir -= 360;
 
-            mCorner.XOffset = HMid + dir * _fovPixels;
+            if (relativeAngle > 180)
+                relativeAngle -= 360;
+
+            mCorner.XOffset = HMid + relativeAngle * _fovPixels;
+            mCorner.Distance = distance;
 
             blocks[i].MappedCorners[j] = mCorner;
         }
@@ -50,30 +55,51 @@ void BasicCam::MapToScreen(Block* blocks)
     return;
 }
 
-/*
-This is very inneficcient
-do occlusion culling based on neighboring blocks from the World[8][8] variable
-
-*/
-
 void BasicCam::OccludeCorners(Block* blocks)
 {
     SelectionSort(blocks);
 
-    ViewportSpan viewportSpan; 
+    memset(_occlusionMap, false, Width);
+
     for (size_t i = 0; i < BLOCK_COUNT; i++) 
     {
-        Block b = blocks[i];
-        int blockX = b.Corners[0].Position.x / Scale;
-        int blockY = b.Corners[0].Position.y / Scale;
+        Block* b = &blocks[i];
 
-   
+        int cornerL = b->VisibleCorners[0]->XOffset;
+        int cornerM = b->VisibleCorners[1]->XOffset;
+        int cornerR = b->VisibleCorners[2]->XOffset;
 
-        viewportSpan.From = blocks[i].VisibleCorners[0]->XOffset;
-        viewportSpan.To = blocks[i].VisibleCorners[2]->XOffset;
-        _occlusionMap[i] = viewportSpan;
-        _occlusionSize++;
-    
+        if (cornerL > Width || cornerR < 0)
+        {    
+            b->VisibleCorners[0] = nullptr;
+            b->VisibleCorners[1] = nullptr;
+            b->VisibleCorners[2] = nullptr;
+            continue;
+        }
+
+        cornerL = max(cornerL, 0);
+        cornerL = min(cornerL, Width);
+        cornerM = max(cornerL, 0);
+        cornerM = min(cornerL, Width);
+        cornerR = max(cornerL, 0);
+        cornerR = min(cornerL, Width);
+
+        if (_occlusionMap[cornerL])
+        {
+            b->VisibleCorners[0] = nullptr;
+        }
+        if (_occlusionMap[cornerM])
+        {
+            b->VisibleCorners[1] = nullptr;
+        }
+        if (_occlusionMap[cornerR])
+        {
+            b->VisibleCorners[2] = nullptr;
+        }
+
+
+        memset(_occlusionMap + cornerL, true, cornerR);
+
     }
 
     return;
@@ -88,7 +114,7 @@ void BasicCam::GenerateLineBuffer(Block* blocks)
         int visibleCornerCount = 3;
         for (int j = 0; j < 3; j++)
         {
-            if (blocks[i].VisibleCorners[j] ==  nullptr) //&blocks[i].MappedCorners[0] && j == 1)
+            if (blocks[i].VisibleCorners[j] == nullptr)
             {
                 visibleCornerCount -= 1;
                 continue;
@@ -105,6 +131,11 @@ void BasicCam::GenerateLineBuffer(Block* blocks)
             line.To = {blocks[i].VisibleCorners[j]->XOffset, VMid + height};
             _lineBuffer[_bufferSize] = line;
             _bufferSize++;
+        }
+
+        if (visibleCornerCount == 0)
+        {
+            continue;
         }
 
         int index = _bufferSize - visibleCornerCount;
@@ -251,6 +282,36 @@ void BasicCam::HandleInput()
         Direction += 360;
     }
 
+    if (_velocity.x != 0 || _velocity.y != 0)
+    {
+        Player.x = Position.x;
+        Player.y = Position.y;
+        serialTrans.sendDatum(Player);
+    }
+
+
     return;
 }
 
+void BasicCam::DrawOpponent()
+{
+    Vector playerPos = ToVector(Position);
+    Vector oppPos = {Opponent.x, Opponent.y};
+
+    int distance = GetDistance(oppPos, playerPos);
+    float dir = GetAngle(oppPos, playerPos) + Direction;
+    
+    if (dir > 180)
+        dir -= 360;
+
+    int xOffset = HMid + dir * _fovPixels;
+    float height = _depthEffect / distance;
+
+    if (xOffset < 0 || xOffset > Width)
+    {
+        return;
+    }
+
+    oled.drawCircle(xOffset, VMid, height / 2);
+    return;
+}

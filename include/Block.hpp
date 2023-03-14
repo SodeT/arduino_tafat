@@ -9,13 +9,11 @@ struct Corner;
 class Block 
 {
 public:
-    BlockCullInfo CullInfo;
-    Vector Middle;
-    char Distance;
-    MappedCorner* VisibleCorners[3];
-    Corner* Corners;
+    Vector Position;
+    byte Distance;
     MappedCorner* MappedCorners; 
-    Block(int x, int z);
+    MappedCorner* VisibleCorners[3];
+    Block(int x, int y);
 
     void SortCorners();
     void GetVisible();

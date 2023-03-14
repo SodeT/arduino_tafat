@@ -12,9 +12,9 @@ float DegToRad(float deg)
 float GetAngle(Vector from, Vector to)
 {
     float xDiff = to.x - from.x;
-    float zDiff = to.y - from.y;
+    float yDiff = to.y - from.y;
 
-    float radAngle = atan2(zDiff, xDiff);
+    float radAngle = atan2(yDiff, xDiff);
     float degAngle = RadToDeg(radAngle);
 
     return degAngle;
@@ -68,17 +68,4 @@ void SelectionSort(Block* blocks)
         }
     }
     return;
-} 
-
-
-bool InsideSpan(ViewportSpan* span, int x)
-{
-    if (span->From < x && x < span->To)
-    {
-        return true;
-    }
-    return false;
 }
-
-
-
