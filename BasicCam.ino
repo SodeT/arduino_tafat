@@ -4,7 +4,7 @@ BasicCam::BasicCam(int x, int y, float Fov)
 {
     _fovPixels = Width / Fov;
     _lineBuffer = (Line*)malloc(sizeof(Line) * BLOCK_COUNT * 7);
-    _occlusionMap = (bool*)malloc(sizeof(bool) * Width);
+    //_occlusionMap = (bool*)malloc(sizeof(bool) * Width);
     return;
 }
 
@@ -282,13 +282,41 @@ void BasicCam::HandleInput()
         Direction += 360;
     }
 
-    if (_velocity.x != 0 || _velocity.y != 0)
+    if (digitalRead(ATK_PIN))
     {
-        Player.x = Position.x;
-        Player.y = Position.y;
-        serialTrans.sendDatum(Player);
+        player.Won = true;
     }
 
+    return;
+}
+
+void BasicCam::Recieve()
+{
+    if (Serial.available())
+    {
+        opponentPointer = (byte*)&opponent;
+        for (int i = 0; Serial.available(); i++) 
+        {
+            opponentPointer[i] = Serial.read();
+        }
+        opponent = *(PlayerInfo*)opponentPointer;
+    }
+    return;
+}
+
+void BasicCam::Transmit()
+{   
+    if (_velocity.x != 0 || _velocity.y != 0 || player.Won)
+    {
+        player.x = Position.x;
+        player.y = Position.y;
+        
+        playerPointer = (byte*)&player;
+        for (int i = 0; i < sizeof(player); i++)
+        {
+            Serial.write(playerPointer[i]);
+        }
+    }
 
     return;
 }
@@ -296,7 +324,7 @@ void BasicCam::HandleInput()
 void BasicCam::DrawOpponent()
 {
     Vector playerPos = ToVector(Position);
-    Vector oppPos = {Opponent.x, Opponent.y};
+    Vector oppPos = {opponent.x, opponent.y};
 
     int distance = GetDistance(oppPos, playerPos);
     float dir = GetAngle(oppPos, playerPos) + Direction;
@@ -305,13 +333,13 @@ void BasicCam::DrawOpponent()
         dir -= 360;
 
     int xOffset = HMid + dir * _fovPixels;
-    float height = _depthEffect / distance;
+    float height = (_depthEffect / distance) / 2;
 
     if (xOffset < 0 || xOffset > Width)
     {
         return;
     }
 
-    oled.drawCircle(xOffset, VMid, height / 2);
+    oled.drawCircle(xOffset, VMid, height);
     return;
 }

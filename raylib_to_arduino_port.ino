@@ -3,15 +3,15 @@
 #include "include/Utils.hpp"
 #include <U8glib.h>
 #include <unistd.h>
-#include <SerialTransfer.h>
 
 Block* blocks;
 BasicCam cam(3, 2, 90);
 
 void setup()
 {
+    pinMode(ATK_PIN, INPUT);
     Serial.begin(11520);
-    serialTrans.begin(Serial);
+    oled.setFont(u8g_font_osb18);
 
     blocks = (Block*)malloc(BLOCK_COUNT * sizeof(Block));
     int i = 0;
@@ -31,26 +31,96 @@ void setup()
 
 void loop()
 {
+    cam.Recieve();
+
+    switch (gameState)
+    {
+    // menu
+    case 0:
+        MenuUpdate();
+        break;
+    // game
+    case 1:
+        GameUpdate();
+        break;
+    }
+
+    cam.Transmit();
+}
+
+void MenuUpdate()
+{
+    if (digitalRead(ATK_PIN) == HIGH)
+    {
+        gameState = 1;
+        ResetGame();
+        Delay(300);
+        //Transition(10);
+        return;
+    }
+
     oled.firstPage();
     do {
-        if (serialTrans.available()) 
+        if (opponent.Won)
         {
-            serialTrans.rxObj(Opponent);
+            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU DIE!!!") / 2), 30, "YOU DIE!!!");
         }
-        cam.HandleInput();
+        else if (player.Won)
+        {
+            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU WIN!!!") / 2), 30, "YOU WIN!!!");
+        }
+        else
+        {
+            oled.drawStr(Width / 2 - (oled.getStrWidth("MENU") / 2), 30, "MENU");
+        }
 
-        cam.DrawOpponent();
+    } while (oled.nextPage());
+    return;
+}
 
-        cam.GetCorners(blocks);
-        //cam.OccludeCorners(blocks);
-        cam.GenerateLineBuffer(blocks);
-        cam.ClampLines();
+void GameUpdate()
+{
+    if (opponent.Won || player.Won)
+    {
+        gameState = 0;
+        //Transition(10);
+        return;
+    }
+    
+    cam.HandleInput();
+
+    cam.GetCorners(blocks);
+    //cam.OccludeCorners(blocks);
+    cam.GenerateLineBuffer(blocks);
+    cam.ClampLines();
+
+    oled.firstPage();
+    do {
         cam.DrawCall();
+        cam.DrawOpponent();
         
         oled.drawLine(HMid -3, VMid, HMid +3, VMid);
-        oled.drawLine(HMid, VMid +3, HMid, VMid -3); 
+        oled.drawLine(HMid, VMid +3, HMid, VMid -3);       
+    } while (oled.nextPage());
 
-    } while(oled.nextPage());
+    return;
+}
+
+void Transition(int d)
+{
+    for (int i = -Width; i < 0; i++)
+    {
+        do {
+            oled.drawBox(i, 0, Width, Height);
+        } while (oled.nextPage());
+    }
+    return;
+}
+
+void ResetGame()
+{
+    player.Won = false;
+    opponent.Won = false;
 }
 
 // this is not my code

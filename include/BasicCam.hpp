@@ -15,8 +15,8 @@ private:
     float _fovPixels;
     int _depthEffect = 700; // lower value => increased shrinking at distance
 
-    int _speed = 1;
-    int _rotationSpeed = 2;
+    int _speed = 4;
+    int _rotationSpeed = 11;
 
     FVector _velocity = {0, 0};
 
@@ -32,6 +32,10 @@ public:
     void ClampLines();
     void DrawCall();
     void HandleInput();
+
+    void Recieve();
+    void Transmit();
+
     void DrawOpponent();
 
 };

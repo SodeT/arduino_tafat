@@ -3,11 +3,11 @@
 
 #include "Block.hpp"
 #include <U8glib.h>
-#include <SerialTransfer.h>
 
 #define pi 3.14159
 #define VRX_PIN  A0
 #define VRY_PIN  A1
+#define ATK_PIN 2
 
 class Block;
 
@@ -42,10 +42,11 @@ struct Corner
     byte Distance;
 };
 
-struct PlayerInfo {
+struct PlayerInfo 
+{
     int x;
     int y;
-    bool won;
+    bool Won;
 };
 
 const byte Width = 128;
@@ -56,23 +57,28 @@ const byte VMid = Height / 2;
 const byte Scale = 10;
 const byte WorldSize = 8;
 
-const size_t BLOCK_COUNT = 2;       // Change this variable to malloc more blocks, just changing the world map wont alloc more memory
+const size_t BLOCK_COUNT = 8;       // Change this variable to malloc more blocks, just changing the world map wont alloc more memory
 const byte World[WorldSize][WorldSize] = {
-    {0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 1, 0, 0},
-    {0, 0, 1, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 1, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0} 
+    {1, 0, 0, 0, 0, 0, 0, 0},
+    {1, 0, 0, 0, 0, 0, 0, 0},
+    {1, 0, 0, 0, 0, 0, 0, 0},
+    {1, 0, 0, 0, 0, 0, 0, 0},
+    {1, 0, 0, 0, 0, 0, 0, 0},
+    {1, 0, 0, 0, 0, 0, 0, 0},
+    {1, 0, 0, 0, 0, 0, 0, 0},
+    {1, 0, 0, 0, 0, 0, 0, 0} 
 };
 
 U8GLIB_SSD1306_128X64 oled(U8G_I2C_OPT_NONE);
-SerialTransfer serialTrans;
 
-PlayerInfo Player = {3, 2, false};
-PlayerInfo Opponent = {0, 0, false};
+PlayerInfo player = {3, 2, false};
+byte* playerPointer = (byte*)&player;
+PlayerInfo opponent = {0, 0, false};
+byte* opponentPointer = (byte*)&opponent;
+
+// 0 = menu, 1 = game 
+byte gameState = 0;
+
 
 float RadToDeg(float rad);
 float DegToRad(float deg);
