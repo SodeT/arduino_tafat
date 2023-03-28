@@ -1,4 +1,3 @@
-
 BasicCam::BasicCam(int x, int y, float Fov) 
     : Position({x * Scale, y * Scale}), Fov(Fov) 
 {
@@ -52,56 +51,6 @@ void BasicCam::GetCorners(Block* blocks)
         blocks[i].SortCorners();
         blocks[i].GetVisible();
     }
-    return;
-}
-
-void BasicCam::OccludeCorners(Block* blocks)
-{
-    SelectionSort(blocks);
-
-    memset(_occlusionMap, false, Width);
-
-    for (size_t i = 0; i < BLOCK_COUNT; i++) 
-    {
-        Block* b = &blocks[i];
-
-        int cornerL = b->VisibleCorners[0]->XOffset;
-        int cornerM = b->VisibleCorners[1]->XOffset;
-        int cornerR = b->VisibleCorners[2]->XOffset;
-
-        if (cornerL > Width || cornerR < 0)
-        {    
-            b->VisibleCorners[0] = nullptr;
-            b->VisibleCorners[1] = nullptr;
-            b->VisibleCorners[2] = nullptr;
-            continue;
-        }
-
-        cornerL = max(cornerL, 0);
-        cornerL = min(cornerL, Width);
-        cornerM = max(cornerL, 0);
-        cornerM = min(cornerL, Width);
-        cornerR = max(cornerL, 0);
-        cornerR = min(cornerL, Width);
-
-        if (_occlusionMap[cornerL])
-        {
-            b->VisibleCorners[0] = nullptr;
-        }
-        if (_occlusionMap[cornerM])
-        {
-            b->VisibleCorners[1] = nullptr;
-        }
-        if (_occlusionMap[cornerR])
-        {
-            b->VisibleCorners[2] = nullptr;
-        }
-
-
-        memset(_occlusionMap + cornerL, true, cornerR);
-
-    }
-
     return;
 }
 
@@ -282,40 +231,24 @@ void BasicCam::HandleInput()
         Direction += 360;
     }
 
-    if (digitalRead(ATK_PIN))
+    if (digitalRead(ATK_PIN) == HIGH)
     {
-        player.Won = true;
-    }
-
-    return;
-}
-
-void BasicCam::Recieve()
-{
-    if (Serial.available())
-    {
-        opponentPointer = (byte*)&opponent;
-        for (int i = 0; Serial.available(); i++) 
+        if (activeBullets >= BULLET_COUNT) 
         {
-            opponentPointer[i] = Serial.read();
+            return;
         }
-        opponent = *(PlayerInfo*)opponentPointer;
-    }
-    return;
-}
-
-void BasicCam::Transmit()
-{   
-    if (_velocity.x != 0 || _velocity.y != 0 || player.Won)
-    {
-        player.x = Position.x;
-        player.y = Position.y;
-        
-        playerPointer = (byte*)&player;
-        for (int i = 0; i < sizeof(player); i++)
+        player.BulletDirection = Direction;
+        for (int i = 0; i < BULLET_COUNT; i++)
         {
-            Serial.write(playerPointer[i]);
+            if (!playerBullets[i].Active)
+            {
+                playerBullets[i] = Bullet(Position.x, Position.y, Direction);
+            }
         }
+    }
+    else 
+    {
+        player.BulletDirection = -1;
     }
 
     return;

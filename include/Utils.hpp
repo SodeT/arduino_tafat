@@ -46,7 +46,8 @@ struct PlayerInfo
 {
     int x;
     int y;
-    bool Won;
+    bool Died;
+    int BulletDirection;
 };
 
 const byte Width = 128;
@@ -54,31 +55,22 @@ const byte Height = 64;
 const byte HMid = Width / 2;
 const byte VMid = Height / 2;
 
-const byte Scale = 10;
+const byte Scale = 20;
 const byte WorldSize = 8;
 
-const size_t BLOCK_COUNT = 8;       // Change this variable to malloc more blocks, just changing the world map wont alloc more memory
+const size_t BLOCK_COUNT = 10;       // Change this variable to malloc more blocks, just changing the world map wont alloc more memory
 const byte World[WorldSize][WorldSize] = {
-    {1, 0, 0, 0, 0, 0, 0, 0},
-    {1, 0, 0, 0, 0, 0, 0, 0},
-    {1, 0, 0, 0, 0, 0, 0, 0},
-    {1, 0, 0, 0, 0, 0, 0, 0},
-    {1, 0, 0, 0, 0, 0, 0, 0},
-    {1, 0, 0, 0, 0, 0, 0, 0},
-    {1, 0, 0, 0, 0, 0, 0, 0},
-    {1, 0, 0, 0, 0, 0, 0, 0} 
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 1, 2, 0, 0, 0, 1, 0},
+    {0, 1, 0, 0, 0, 0, 1, 0},
+    {0, 0, 0, 1, 0, 0, 0, 0},
+    {0, 0, 0, 0, 1, 0, 0, 0},
+    {0, 1, 0, 0, 0, 0, 1, 0},
+    {0, 1, 0, 0, 0, 0, 1, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0} 
 };
 
-U8GLIB_SSD1306_128X64 oled(U8G_I2C_OPT_NONE);
-
-PlayerInfo player = {3, 2, false};
-byte* playerPointer = (byte*)&player;
-PlayerInfo opponent = {0, 0, false};
-byte* opponentPointer = (byte*)&opponent;
-
-// 0 = menu, 1 = game 
-byte gameState = 0;
-
+const byte BULLET_COUNT = 4;
 
 float RadToDeg(float rad);
 float DegToRad(float deg);
@@ -92,8 +84,8 @@ float GetDistance(FVector from, FVector to);
 FVector ToFVector(Vector vec);
 Vector ToVector(FVector vec);
 
-void SelectionSort(Block* blocks);
+void Recieve();
+void Transmit();
 
 
 #endif
-

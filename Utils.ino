@@ -1,4 +1,3 @@
-
 float RadToDeg(float rad)
 {
     return rad * (180/pi);
@@ -46,26 +45,35 @@ Vector ToVector(FVector vec)
     return vec2;
 }
 
-void SelectionSort(Block* blocks) 
-{ 
-    size_t index; 
-    for (size_t i = 0; i < BLOCK_COUNT -1; i++)
+void Recieve()
+{
+    if (Serial.available())
     {
-        index = i; 
-        for (size_t j = i+1; j < BLOCK_COUNT; j++)
+        Serial.readBytes(opponentPointer, sizeof(PlayerInfo));
+        opponent = *(PlayerInfo*)opponentPointer;
+
+        if (opponent.BulletDirection == -1)
         {
-            if (blocks[j].Distance < blocks[index].Distance)
-            {
-                index = j;
-            }
+            return;
         }
 
-        if (index != i)
+        for (int i = 0; i < BULLET_COUNT; i++)
         {
-            Block b = blocks[i];
-            blocks[i] = blocks[index];
-            blocks[index] = b;
+            if (!opponentBullets[i].Active)
+            {
+                opponentBullets[i] = Bullet(opponent.x, opponent.y, opponent.BulletDirection);
+            }
         }
     }
+    return;
+}
+
+void Transmit()
+{   
+
+    player.x = cam.Position.x;
+    player.y = cam.Position.y;
+
+    Serial.write(playerPointer, sizeof(PlayerInfo));
     return;
 }

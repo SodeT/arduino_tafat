@@ -1,8 +1,24 @@
 #include "include/Block.hpp"
 #include "include/BasicCam.hpp"
+#include "include/Bullet.hpp"
 #include "include/Utils.hpp"
+
 #include <U8glib.h>
 #include <unistd.h>
+
+U8GLIB_SSD1306_128X64 oled(U8G_I2C_OPT_NONE);
+
+PlayerInfo player = {3, 2, false};
+byte* playerPointer = (byte*)&player;
+PlayerInfo opponent = {0, 0, false};
+byte* opponentPointer = (byte*)&opponent;
+
+int activeBullets;
+Bullet* playerBullets;
+Bullet* opponentBullets;
+
+// 0 = menu, 1 = game 
+byte gameState = 0;
 
 Block* blocks;
 BasicCam cam(3, 2, 90);
@@ -10,8 +26,17 @@ BasicCam cam(3, 2, 90);
 void setup()
 {
     pinMode(ATK_PIN, INPUT);
-    Serial.begin(11520);
+    Serial.begin(9600);
     oled.setFont(u8g_font_osb18);
+
+    Bullet tmp(0,0,-1);
+    tmp.Active = false;
+
+    playerBullets = (Bullet*)malloc(sizeof(Bullet) * BULLET_COUNT);
+    opponentBullets = (Bullet*)malloc(sizeof(Bullet) * BULLET_COUNT);
+
+    memset(playerBullets, tmp, sizeof(Bullet) * BULLET_COUNT);
+    memset(opponentBullets, tmp, sizeof(Bullet) * BULLET_COUNT);
 
     blocks = (Block*)malloc(BLOCK_COUNT * sizeof(Block));
     int i = 0;
@@ -31,7 +56,7 @@ void setup()
 
 void loop()
 {
-    cam.Recieve();
+    Recieve();
 
     switch (gameState)
     {
@@ -45,7 +70,7 @@ void loop()
         break;
     }
 
-    cam.Transmit();
+    Transmit();
 }
 
 void MenuUpdate()
@@ -54,24 +79,24 @@ void MenuUpdate()
     {
         gameState = 1;
         ResetGame();
-        Delay(300);
+        // delay(300);
         //Transition(10);
         return;
     }
 
     oled.firstPage();
     do {
-        if (opponent.Won)
+        if (player.Died)
         {
-            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU DIE!!!") / 2), 30, "YOU DIE!!!");
+            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU DIE!!!") / 2), 25, "YOU DIE!!!");
         }
-        else if (player.Won)
+        else if (opponent.Died)
         {
-            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU WIN!!!") / 2), 30, "YOU WIN!!!");
+            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU WIN!!!") / 2), 25, "YOU WIN!!!");
         }
         else
         {
-            oled.drawStr(Width / 2 - (oled.getStrWidth("MENU") / 2), 30, "MENU");
+            oled.drawStr(Width / 2 - (oled.getStrWidth("MENU") / 2), 25, "MENU");
         }
 
     } while (oled.nextPage());
@@ -80,7 +105,7 @@ void MenuUpdate()
 
 void GameUpdate()
 {
-    if (opponent.Won || player.Won)
+    if (opponent.Died || player.Died)
     {
         gameState = 0;
         //Transition(10);
@@ -100,7 +125,10 @@ void GameUpdate()
         cam.DrawOpponent();
         
         oled.drawLine(HMid -3, VMid, HMid +3, VMid);
-        oled.drawLine(HMid, VMid +3, HMid, VMid -3);       
+        oled.drawLine(HMid, VMid +3, HMid, VMid -3);
+
+        renderFreeRam();
+
     } while (oled.nextPage());
 
     return;
@@ -108,10 +136,10 @@ void GameUpdate()
 
 void Transition(int d)
 {
-    for (int i = -Width; i < 0; i++)
+    for (int i = 0; i < Width; i++)
     {
         do {
-            oled.drawBox(i, 0, Width, Height);
+            oled.drawBox(0, 0, i, Height);
         } while (oled.nextPage());
     }
     return;
@@ -119,8 +147,16 @@ void Transition(int d)
 
 void ResetGame()
 {
-    player.Won = false;
-    opponent.Won = false;
+    player.Died = false;
+    opponent.Died = false;
+}
+
+void renderFreeRam()
+{
+    float length = (2048 - freeRam())/2048.0f;
+    length *= Width;
+    oled.drawLine(0, 0, length, 0);
+    return;
 }
 
 // this is not my code

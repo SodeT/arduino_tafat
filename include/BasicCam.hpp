@@ -27,14 +27,10 @@ public:
 
     BasicCam(int x, int y, float Fov);
     void GetCorners(Block* blocks);
-    void OccludeCorners(Block* blocks);
     void GenerateLineBuffer(Block* blocks);
     void ClampLines();
     void DrawCall();
     void HandleInput();
-
-    void Recieve();
-    void Transmit();
 
     void DrawOpponent();
 
