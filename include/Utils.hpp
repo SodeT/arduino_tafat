@@ -7,7 +7,7 @@
 #define pi 3.14159
 #define VRX_PIN  A0
 #define VRY_PIN  A1
-#define ATK_PIN 2
+#define CHASE_PIN 2
 
 class Block;
 
@@ -46,14 +46,20 @@ struct PlayerInfo
 {
     int x;
     int y;
-    bool Died;
-    int BulletDirection;
+    bool Chasing;
 };
+
+const int JoystickHigh = 768;
+const int JoystickLow = 256;
 
 const byte Width = 128;
 const byte Height = 64;
 const byte HMid = Width / 2;
 const byte VMid = Height / 2;
+
+const int Fov = 90;
+const int DepthEffect = 700; // lower value => increased shrinking at distance
+const float FovPixels = Width / Fov;
 
 const byte Scale = 20;
 const byte WorldSize = 8;
@@ -66,11 +72,11 @@ const byte World[WorldSize][WorldSize] = {
     {0, 0, 0, 1, 0, 0, 0, 0},
     {0, 0, 0, 0, 1, 0, 0, 0},
     {0, 1, 0, 0, 0, 0, 1, 0},
-    {0, 1, 0, 0, 0, 0, 1, 0},
+    {0, 1, 0, 0, 3, 0, 1, 0},
     {0, 0, 0, 0, 0, 0, 0, 0} 
 };
 
-const byte BULLET_COUNT = 4;
+const byte TagDistance = 1;
 
 float RadToDeg(float rad);
 float DegToRad(float deg);
@@ -86,6 +92,8 @@ Vector ToVector(FVector vec);
 
 void Recieve();
 void Transmit();
+
+void RecieveSetup();
 
 
 #endif

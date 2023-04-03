@@ -1,7 +1,5 @@
-BasicCam::BasicCam(int x, int y, float Fov) 
-    : Position({x * Scale, y * Scale}), Fov(Fov) 
+BasicCam::BasicCam() 
 {
-    _fovPixels = Width / Fov;
     _lineBuffer = (Line*)malloc(sizeof(Line) * BLOCK_COUNT * 7);
     //_occlusionMap = (bool*)malloc(sizeof(bool) * Width);
     return;
@@ -43,7 +41,7 @@ void BasicCam::GetCorners(Block* blocks)
             if (relativeAngle > 180)
                 relativeAngle -= 360;
 
-            mCorner.XOffset = HMid + relativeAngle * _fovPixels;
+            mCorner.XOffset = HMid + relativeAngle * FovPixels;
             mCorner.Distance = distance;
 
             blocks[i].MappedCorners[j] = mCorner;
@@ -69,7 +67,7 @@ void BasicCam::GenerateLineBuffer(Block* blocks)
                 continue;
             }
 
-            float height = _depthEffect / blocks[i].VisibleCorners[j]->Distance;
+            float height = DepthEffect / blocks[i].VisibleCorners[j]->Distance;
             float offset = blocks[i].VisibleCorners[j]->XOffset;
             if (offset > HMid)
             {
@@ -172,12 +170,12 @@ void BasicCam::HandleInput()
     int xValue = analogRead(VRX_PIN);
     int yValue = analogRead(VRY_PIN);
 
-    if (yValue <= 256)
+    if (yValue <= JoystickLow)
     {
         _velocity.x = -cos(DegToRad(Direction)) * _speed;
         _velocity.y = sin(DegToRad(Direction)) * _speed;
     }
-    else if (yValue >= 768)
+    else if (yValue >= JoystickHigh)
     {
         _velocity.x = -cos(DegToRad(Direction)) * -_speed;
         _velocity.y = sin(DegToRad(Direction)) * -_speed;
@@ -213,11 +211,11 @@ void BasicCam::HandleInput()
     }
 
     // Rotation
-    if (xValue <= 256)
+    if (xValue <= JoystickLow)
     {
         Direction += _rotationSpeed;
     }
-    else if (xValue >= 768)
+    else if (xValue >= JoystickHigh)
     {
         Direction -= _rotationSpeed;
     }
@@ -229,26 +227,6 @@ void BasicCam::HandleInput()
     else if (Direction < 0)
     {
         Direction += 360;
-    }
-
-    if (digitalRead(ATK_PIN) == HIGH)
-    {
-        if (activeBullets >= BULLET_COUNT) 
-        {
-            return;
-        }
-        player.BulletDirection = Direction;
-        for (int i = 0; i < BULLET_COUNT; i++)
-        {
-            if (!playerBullets[i].Active)
-            {
-                playerBullets[i] = Bullet(Position.x, Position.y, Direction);
-            }
-        }
-    }
-    else 
-    {
-        player.BulletDirection = -1;
     }
 
     return;
@@ -265,8 +243,8 @@ void BasicCam::DrawOpponent()
     if (dir > 180)
         dir -= 360;
 
-    int xOffset = HMid + dir * _fovPixels;
-    float height = (_depthEffect / distance) / 2;
+    int xOffset = HMid + dir * FovPixels;
+    float height = (DepthEffect / distance) / 2;
 
     if (xOffset < 0 || xOffset > Width)
     {

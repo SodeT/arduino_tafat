@@ -1,6 +1,5 @@
 #include "include/Block.hpp"
 #include "include/BasicCam.hpp"
-#include "include/Bullet.hpp"
 #include "include/Utils.hpp"
 
 #include <U8glib.h>
@@ -8,35 +7,27 @@
 
 U8GLIB_SSD1306_128X64 oled(U8G_I2C_OPT_NONE);
 
-PlayerInfo player = {3, 2, false};
+PlayerInfo player = {0, 0, false};
 byte* playerPointer = (byte*)&player;
 PlayerInfo opponent = {0, 0, false};
 byte* opponentPointer = (byte*)&opponent;
 
-int activeBullets;
-Bullet* playerBullets;
-Bullet* opponentBullets;
+// 0 = ongoing, 1 = won, 2 = lost
+byte playerState = 0;
 
 // 0 = menu, 1 = game 
 byte gameState = 0;
 
 Block* blocks;
-BasicCam cam(3, 2, 90);
+BasicCam cam;
+
+float showInfoTimer = 0;
 
 void setup()
 {
-    pinMode(ATK_PIN, INPUT);
     Serial.begin(9600);
     oled.setFont(u8g_font_osb18);
-
-    Bullet tmp(0,0,-1);
-    tmp.Active = false;
-
-    playerBullets = (Bullet*)malloc(sizeof(Bullet) * BULLET_COUNT);
-    opponentBullets = (Bullet*)malloc(sizeof(Bullet) * BULLET_COUNT);
-
-    memset(playerBullets, tmp, sizeof(Bullet) * BULLET_COUNT);
-    memset(opponentBullets, tmp, sizeof(Bullet) * BULLET_COUNT);
+    pinMode(CHASE_PIN, INPUT);
 
     blocks = (Block*)malloc(BLOCK_COUNT * sizeof(Block));
     int i = 0;
@@ -51,6 +42,18 @@ void setup()
             }
         }
     }
+    
+    player.Chasing = (digitalRead(CHASE_PIN) == HIGH);
+    
+    if (player.Chasing)
+    {
+        cam.Position = {0,2};
+    }
+    else 
+    {
+        cam.Position = {2,0};
+    }
+    
     return;
 }
 
@@ -75,7 +78,7 @@ void loop()
 
 void MenuUpdate()
 {
-    if (digitalRead(ATK_PIN) == HIGH)
+    if (analogRead(VRY_PIN) < JoystickLow)
     {
         gameState = 1;
         ResetGame();
@@ -86,17 +89,20 @@ void MenuUpdate()
 
     oled.firstPage();
     do {
-        if (player.Died)
+        switch (playerState)
         {
-            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU DIE!!!") / 2), 25, "YOU DIE!!!");
-        }
-        else if (opponent.Died)
-        {
-            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU WIN!!!") / 2), 25, "YOU WIN!!!");
-        }
-        else
-        {
+        // ongoing
+        case 0:
             oled.drawStr(Width / 2 - (oled.getStrWidth("MENU") / 2), 25, "MENU");
+            break;
+        // won
+        case 1:
+            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU WON!!!") / 2), 25, "YOU WON!!!");
+            break;
+        // lost
+        case 2:
+            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU LOST!!!") / 2), 25, "YOU LOST!!!");
+            break;
         }
 
     } while (oled.nextPage());
@@ -105,17 +111,29 @@ void MenuUpdate()
 
 void GameUpdate()
 {
-    if (opponent.Died || player.Died)
+    if (player.Chasing)
     {
-        gameState = 0;
-        //Transition(10);
+        if (GetDistance(Vector{player.x, player.y}, Vector{opponent.x, opponent.y}) < TagDistance)
+        {
+            playerState = 1;
+            gameState = 0;
+        }
+        return;
+    }
+
+    if (opponent.Chasing)
+    {
+        if (GetDistance(Vector{player.x, player.y}, Vector{opponent.x, opponent.y}) < TagDistance)
+        {
+            playerState = 2;
+            gameState = 0;
+        }
         return;
     }
     
     cam.HandleInput();
 
     cam.GetCorners(blocks);
-    //cam.OccludeCorners(blocks);
     cam.GenerateLineBuffer(blocks);
     cam.ClampLines();
 
@@ -126,6 +144,15 @@ void GameUpdate()
         
         oled.drawLine(HMid -3, VMid, HMid +3, VMid);
         oled.drawLine(HMid, VMid +3, HMid, VMid -3);
+
+        if (showInfoTimer < 1)
+        {
+            if (player.Chasing)
+                oled.drawStr(Width / 2 - (oled.getStrWidth("CHASE") / 2), 25, "CHASE");
+            else
+                oled.drawStr(Width / 2 - (oled.getStrWidth("RUN") / 2), 25, "RUN");
+            showInfoTimer += 0.01;
+        }
 
         renderFreeRam();
 
@@ -147,8 +174,17 @@ void Transition(int d)
 
 void ResetGame()
 {
-    player.Died = false;
-    opponent.Died = false;
+    player.Chasing = !player.Chasing;
+    opponent.Chasing = !opponent.Chasing;
+    showInfoTimer = 0;
+    if (player.Chasing)
+    {
+        cam.Position = {0,2};
+    }
+    else 
+    {
+        cam.Position = {2,0};
+    }
 }
 
 void renderFreeRam()

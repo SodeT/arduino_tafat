@@ -51,26 +51,12 @@ void Recieve()
     {
         Serial.readBytes(opponentPointer, sizeof(PlayerInfo));
         opponent = *(PlayerInfo*)opponentPointer;
-
-        if (opponent.BulletDirection == -1)
-        {
-            return;
-        }
-
-        for (int i = 0; i < BULLET_COUNT; i++)
-        {
-            if (!opponentBullets[i].Active)
-            {
-                opponentBullets[i] = Bullet(opponent.x, opponent.y, opponent.BulletDirection);
-            }
-        }
     }
     return;
 }
 
 void Transmit()
 {   
-
     player.x = cam.Position.x;
     player.y = cam.Position.y;
 

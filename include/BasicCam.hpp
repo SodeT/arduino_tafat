@@ -13,7 +13,6 @@ private:
     bool* _occlusionMap;
 
     float _fovPixels;
-    int _depthEffect = 700; // lower value => increased shrinking at distance
 
     int _speed = 4;
     int _rotationSpeed = 11;
@@ -22,10 +21,9 @@ private:
 
 public:
     FVector Position;
-    float Fov;
     int Direction = 180;
 
-    BasicCam(int x, int y, float Fov);
+    BasicCam();
     void GetCorners(Block* blocks);
     void GenerateLineBuffer(Block* blocks);
     void ClampLines();
