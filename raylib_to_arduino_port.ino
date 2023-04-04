@@ -92,11 +92,11 @@ void MenuUpdate()
             break;
         // won
         case 1:
-            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU WON!!!") / 2), 20, "YOU WON!!!");
+            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU WON") / 2), 20, "YOU WON");
             break;
         // lost
         case 2:
-            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU LOST!!!") / 2), 20, "YOU LOST!!!");
+            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU LOST") / 2), 20, "YOU LOST");
             break;
         }
 
@@ -144,8 +144,6 @@ void GameUpdate()
             showInfoTimer += 0.01;
         }
 
-        renderFreeRam();
-
     } while (oled.nextPage());
 
     if (GetDistance(Vector{player.x, player.y}, Vector{opponent.x, opponent.y}) < TagDistance)
@@ -161,21 +159,9 @@ void GameUpdate()
            
         gameState = 0;
         justEnteredMenu = true;
-        //Transition();
         return;
     }
     
-    return;
-}
-
-void Transition()
-{
-    for (int i = 0; i < Width; i++)
-    {
-        do {
-            oled.drawBox(0, 0, i, Height);
-        } while (oled.nextPage());
-    }
     return;
 }
 
@@ -208,25 +194,4 @@ void SetPositions()
         opponent.y = ChaseStart.y;
     }
     return;
-}
-
-void renderFreeRam()
-{
-    float length = (2048 - freeRam())/2048.0f;
-    length *= Width;
-    oled.drawLine(0, 0, length, 0);
-    return;
-}
-
-// this is not my code
-void display_freeram() {
-    Serial.print(F("- SRAM left: "));
-    Serial.println(freeRam());
-}
-
-int freeRam() {
-    extern int __heap_start,*__brkval;
-    int v;
-    return (int)&v - (__brkval == 0  
-        ? (int)&__heap_start : (int) __brkval);  
 }
