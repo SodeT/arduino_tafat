@@ -7,10 +7,12 @@
 
 U8GLIB_SSD1306_128X64 oled(U8G_I2C_OPT_NONE);
 
-PlayerInfo player = {0, 0, false};
+PlayerInfo player = {0, 0};
 byte* playerPointer = (byte*)&player;
-PlayerInfo opponent = {0, 0, false};
+PlayerInfo opponent = {0, 0};
 byte* opponentPointer = (byte*)&opponent;
+
+bool chasing = false;
 
 // 0 = ongoing, 1 = won, 2 = lost
 byte playerState = 0;
@@ -22,6 +24,10 @@ Block* blocks;
 BasicCam cam;
 
 float showInfoTimer = 0;
+
+bool justEnteredMenu = false;
+
+int transmitTime = 0;
 
 void setup()
 {
@@ -43,16 +49,9 @@ void setup()
         }
     }
     
-    player.Chasing = (digitalRead(CHASE_PIN) == HIGH);
+    chasing = (digitalRead(CHASE_PIN) == HIGH);
     
-    if (player.Chasing)
-    {
-        cam.Position = {0,2};
-    }
-    else 
-    {
-        cam.Position = {2,0};
-    }
+    SetPositions();
     
     return;
 }
@@ -73,20 +72,16 @@ void loop()
         break;
     }
 
-    Transmit();
+    transmitTime += 1;
+    if (transmitTime >= TRANSMIT_INTERVAL)
+    {
+        Transmit();
+        transmitTime = 0;
+    }
 }
 
 void MenuUpdate()
 {
-    if (analogRead(VRY_PIN) < JoystickLow)
-    {
-        gameState = 1;
-        ResetGame();
-        // delay(300);
-        //Transition(10);
-        return;
-    }
-
     oled.firstPage();
     do {
         switch (playerState)
@@ -97,39 +92,34 @@ void MenuUpdate()
             break;
         // won
         case 1:
-            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU WON!!!") / 2), 25, "YOU WON!!!");
+            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU WON!!!") / 2), 20, "YOU WON!!!");
             break;
         // lost
         case 2:
-            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU LOST!!!") / 2), 25, "YOU LOST!!!");
+            oled.drawStr(Width / 2 - (oled.getStrWidth("YOU LOST!!!") / 2), 20, "YOU LOST!!!");
             break;
         }
 
     } while (oled.nextPage());
+
+    if (justEnteredMenu)
+    {
+        delay(2000);
+        justEnteredMenu = false;
+    }
+
+    if (analogRead(VRY_PIN) < JoystickLow)
+    {
+        gameState = 1;
+        ResetGame();
+        return;
+    }
+
     return;
 }
 
 void GameUpdate()
 {
-    if (player.Chasing)
-    {
-        if (GetDistance(Vector{player.x, player.y}, Vector{opponent.x, opponent.y}) < TagDistance)
-        {
-            playerState = 1;
-            gameState = 0;
-        }
-        return;
-    }
-
-    if (opponent.Chasing)
-    {
-        if (GetDistance(Vector{player.x, player.y}, Vector{opponent.x, opponent.y}) < TagDistance)
-        {
-            playerState = 2;
-            gameState = 0;
-        }
-        return;
-    }
     
     cam.HandleInput();
 
@@ -147,7 +137,7 @@ void GameUpdate()
 
         if (showInfoTimer < 1)
         {
-            if (player.Chasing)
+            if (chasing)
                 oled.drawStr(Width / 2 - (oled.getStrWidth("CHASE") / 2), 25, "CHASE");
             else
                 oled.drawStr(Width / 2 - (oled.getStrWidth("RUN") / 2), 25, "RUN");
@@ -158,10 +148,27 @@ void GameUpdate()
 
     } while (oled.nextPage());
 
+    if (GetDistance(Vector{player.x, player.y}, Vector{opponent.x, opponent.y}) < TagDistance)
+    {
+        if (chasing)
+        {
+            playerState = 1;
+        }
+        else
+        {
+            playerState = 2;
+        }
+           
+        gameState = 0;
+        justEnteredMenu = true;
+        //Transition();
+        return;
+    }
+    
     return;
 }
 
-void Transition(int d)
+void Transition()
 {
     for (int i = 0; i < Width; i++)
     {
@@ -174,17 +181,33 @@ void Transition(int d)
 
 void ResetGame()
 {
-    player.Chasing = !player.Chasing;
-    opponent.Chasing = !opponent.Chasing;
     showInfoTimer = 0;
-    if (player.Chasing)
+    SetPositions();
+    playerState = 0;
+    return;
+}
+
+void SetPositions()
+{
+    if (chasing)
     {
-        cam.Position = {0,2};
+        cam.Position = ChaseStart;
+        player.x = cam.Position.x;
+        player.y = cam.Position.y;
+
+        opponent.x = RunStart.x;
+        opponent.y = RunStart.y;
     }
     else 
     {
-        cam.Position = {2,0};
+        cam.Position = RunStart;
+        player.x = cam.Position.x;
+        player.y = cam.Position.y;
+
+        opponent.x = ChaseStart.x;
+        opponent.y = ChaseStart.y;
     }
+    return;
 }
 
 void renderFreeRam()

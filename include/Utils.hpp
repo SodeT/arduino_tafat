@@ -46,7 +46,9 @@ struct PlayerInfo
 {
     int x;
     int y;
-    bool Chasing;
+    bool chasing : 1;
+    bool waitingToStart : 1;
+    
 };
 
 const int JoystickHigh = 768;
@@ -76,7 +78,11 @@ const byte World[WorldSize][WorldSize] = {
     {0, 0, 0, 0, 0, 0, 0, 0} 
 };
 
-const byte TagDistance = 1;
+const byte TagDistance = 1 * Scale;
+const FVector ChaseStart = {8 * Scale, 8 * Scale};
+const FVector RunStart = {0 * Scale, 0 * Scale};
+
+const int TRANSMIT_INTERVAL = 2;
 
 float RadToDeg(float rad);
 float DegToRad(float deg);
